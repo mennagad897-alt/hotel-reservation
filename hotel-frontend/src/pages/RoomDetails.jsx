@@ -4,9 +4,9 @@ import API from "../api/axiosConfig";
 import { AuthContext } from "../context/AuthContext";
 
 const RoomDetails = () => {
-    const { id } = useParams(); // بياخد الـ ID من الـ URL
+    const { id } = useParams(); 
     const [room, setRoom] = useState(null);
-    const { user } = useContext(AuthContext); // عشان نتأكد إنه عامل Login قبل ما يحجز
+    const { user } = useContext(AuthContext); 
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -27,7 +27,6 @@ const RoomDetails = () => {
             navigate("/login");
             return;
         }
-        // هنا هننادي على API الحجز (هنعمله في التاسك الجاية)
         alert(`Booking request sent for ${room.title}`);
     };
 
@@ -37,7 +36,6 @@ const RoomDetails = () => {
         <div className="container mx-auto px-4 py-12 max-w-6xl">
             <div className="flex flex-col lg:flex-row gap-12 bg-white p-6 rounded-3xl shadow-xl border border-gray-50">
                 
-                {/* 1. صورة الغرفة الكبيرة */}
                 <div className="lg:w-1/2">
                     <img 
                         src={room.image || 'https://via.placeholder.com/800x500'} 
@@ -46,7 +44,6 @@ const RoomDetails = () => {
                     />
                 </div>
 
-                {/* 2. تفاصيل الغرفة */}
                 <div className="lg:w-1/2 flex flex-col justify-between py-2">
                     <div>
                         <h1 className="text-4xl font-extrabold text-indigo-900 mb-4">{room.title}</h1>
@@ -70,7 +67,6 @@ const RoomDetails = () => {
                             </div>
                         </div>
 
-                        {/* زرار الحجز بالتدريج بتاعنا */}
                         <button 
                             onClick={handleBooking}
                             className="w-full py-4 bg-gradient-to-r from-indigo-600 to-blue-800 text-white text-xl font-bold rounded-2xl shadow-lg hover:scale-[1.02] transition-all"
@@ -83,5 +79,6 @@ const RoomDetails = () => {
         </div>
     );
 };
+
 
 export default RoomDetails;

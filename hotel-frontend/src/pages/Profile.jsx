@@ -3,7 +3,7 @@ import { AuthContext } from "../context/AuthContext";
 import API from "../api/axiosConfig";
 
 const Profile = () => {
-  const { user } = useContext(AuthContext); // بناخد بيانات اليوزر من الـ Context
+  const { user } = useContext(AuthContext); 
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +27,6 @@ const Profile = () => {
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         
-        {/* هيدر البروفايل مع لون الـ Indigo */}
         <div className="bg-gradient-to-r from-indigo-600 to-blue-800 h-32 flex items-center justify-center">
             <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center text-3xl font-bold text-indigo-600">
                 {user?.username?.charAt(0).toUpperCase()}

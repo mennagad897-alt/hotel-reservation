@@ -8,7 +8,7 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-             <Navbar /> {/* هيفضل ثابت فوق في كل الموقع */}
+             <Navbar /> 
       <main className="min-h-screen bg-gray-50">
         <AppRoutes />
       </main>
@@ -17,4 +17,4 @@ function App() {
     );
 }
 
-export default App;
+export default App; 

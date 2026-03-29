@@ -3,11 +3,11 @@ import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext); // بناخد اليوزر ودالة الخروج
+  const { user, logout } = useContext(AuthContext); 
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout(); // بيمسح التوكن ويصفر الحالة
+    logout(); 
     navigate("/login");
   };
 
@@ -15,17 +15,14 @@ const Navbar = () => {
     <nav className="bg-gradient-to-r from-indigo-900 to-blue-900 text-white shadow-lg p-4">
       <div className="container mx-auto flex justify-between items-center">
         
-        {/* اللوجو - يودي على الهوم */}
         <Link to="/" className="text-2xl font-black tracking-tighter">
           LUXE<span className="text-indigo-400">HOTEL</span>
         </Link>
 
-        {/* الروابط */}
         <div className="flex items-center gap-6 font-medium">
           <Link title="Home" to="/" className="hover:text-indigo-300 transition">Rooms</Link>
           
           {user ? (
-            // لو المستخدم عامل Login يظهر له دول
             <>
               <Link to="/profile" className="hover:text-indigo-300 transition">My Profile</Link>
               <button 
@@ -39,7 +36,6 @@ const Navbar = () => {
               </div>
             </>
           ) : (
-            // لو مش عامل Login يظهر له دول
             <>
               <Link to="/login" className="hover:text-indigo-300 transition">Login</Link>
               <Link 

@@ -2,11 +2,9 @@ import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../api/axiosConfig";
 import { useState } from "react";
-// 1. استيراد المكتبات الجديدة
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// 2. تعريف الـ Schema (قواعد البيانات اللي Zod هيفتش عليها)
 const signupSchema = z.object({
   username: z
     .string()
@@ -25,7 +23,6 @@ const Signup = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
 
-  // 3. ربط الـ Schema بـ React Hook Form باستخدام الـ resolver
   const { 
     register, 
     handleSubmit, 
@@ -37,7 +34,7 @@ const Signup = () => {
 const onSubmit = async (data) => {
     try {
       setServerError("");
-      console.log("Data being sent:", data); // عشان نتأكد إن Zod مطلع البيانات صح
+      console.log("Data being sent:", data); 
       
       const response = await API.post("/signup", data);
       console.log("Response from server:", response);
@@ -47,7 +44,6 @@ const onSubmit = async (data) => {
         navigate("/login");
       }
     } catch (err) {
-      // السطر ده هيخلينا نشوف المشكلة فين بالظبط في الكونسول
       console.error("Full Error Object:", err);
       setServerError(err.response?.data?.message || "Check console for more details.");
     }
@@ -67,7 +63,6 @@ const onSubmit = async (data) => {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* حقل الاسم - شيلنا الـ required والـ pattern يدوي لأن Zod بيقوم بالواجب */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Full Name</label>
             <input
@@ -81,7 +76,6 @@ const onSubmit = async (data) => {
             {errors.username && <p className="text-red-500 text-xs mt-1 ml-1">{errors.username.message}</p>}
           </div>
 
-          {/* حقل الإيميل */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Email Address</label>
             <input
@@ -95,7 +89,6 @@ const onSubmit = async (data) => {
             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
           </div>
 
-          {/* حقل الباسورد */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Password</label>
             <input

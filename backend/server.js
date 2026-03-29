@@ -18,20 +18,20 @@ mongoose.connect(dbURI)
     .then(() => console.log('Connected to MongoDB successfully!'))
     .catch(err => console.error('Connection error:', err));
 
-// --- Auth Routes ---
-// Signup Route مع التشفير
 app.post('/api/signup', async function(req, res) {
     try {
         const { username, email, password } = req.body;
 
-        // 2. تشفير الباسورد قبل الحفظ
+        console.log("Password received in Signup:", password);
+
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
+        console.log("Password after hashing:", hashedPassword);
 
         const newUser = new User({ 
             username, 
             email, 
-            password: hashedPassword // بنخزن النسخة المشفرة
+            password: hashedPassword 
         });
 
         await newUser.save();
@@ -42,38 +42,58 @@ app.post('/api/signup', async function(req, res) {
     }
 });
 
-// Login Route مع مقارنة التشفير
 app.post('/api/login', async function(req, res) {
     try {
         const { email, password } = req.body;
+        
+        console.log("--- محاولة تسجيل دخول ---");
+        console.log("الإيميل المبعوث:", email);
+
+        // 1. البحث عن المستخدم
         const user = await User.findOne({ email: email });
-        
         if (!user) {
+            console.log("النتيجة: الإيميل مش موجود");
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        // 3. مقارنة الباسورد اللي بعته اليوزر مع المتشفر في الداتا بيز
+        // 2. مقارنة الباسورد الهاش
         const isMatch = await bcrypt.compare(password, user.password);
-        
+        console.log("هل الباسورد متطابق؟:", isMatch);
+
         if (!isMatch) {
+            console.log("النتيجة: الباسورد غلط");
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        // 4. توليد التوكن باستخدام السر من ملف .env
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        
+        // 3. توليد التوكن (الجزء اللي كان فيه الشك)
+        // بنستخدم سر احتياطي في حالة لو ملف الـ .env فيه مشكلة
+        const secretKey = process.env.JWT_SECRET || "fallback_secret_key_123";
+
+        const token = jwt.sign(
+            { id: user._id }, 
+            secretKey, 
+            { expiresIn: '1h' }
+        );
+
+        console.log("تم توليد التوكن بنجاح! 🔑");
+
+        // 4. إرسال الرد النهائي
         res.json({
-            token,
-            user: { id: user._id, username: user.username, email: user.email }
+            token: token,
+            user: { 
+                id: user._id, 
+                username: user.username, 
+                email: user.email 
+            }
         });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error" });
+        // لو حصل أي خطأ في أي خطوة فوق، هيظهر هنا بالتفصيل في الترمينال
+        console.error("خطأ مفصل في السيرفر:", err.message);
+        res.status(500).json({ message: "Server Error: " + err.message });
     }
 });
 
-// --- Room Routes ---
 app.post('/api/rooms', async (req, res) => {
     const newRoom = new Room(req.body);
     await newRoom.save();
@@ -89,7 +109,6 @@ app.get('/api/rooms', async (req, res) => {
     }
 });
 
-// --- Booking Routes ---
 app.post('/api/book', async (req, res) => {
     const { roomId, guestName, checkIn, checkOut } = req.body;
     
@@ -133,7 +152,6 @@ app.get('/api/book', async (req, res) => {
     }
 });
 
-// دالة الـ Middleware بالصيغة العادية
 async function authMiddleware(req, res, next) {
     const authHeader = req.header('Authorization');
     const token = authHeader && authHeader.split(' ')[1];
@@ -151,11 +169,8 @@ async function authMiddleware(req, res, next) {
     }
 }
 
-// GET /api/user/profile
 app.get('/api/user/profile', authMiddleware, async (req, res) => {
     try {
-        // بنجيب اليوزر من الداتا بيز باستخدام الـ ID اللي موجود في التوكن
-        // وبنقول له (.select('-password')) عشان مش عايزين نبعت الباسورد للفرونت إند للأمان
         const user = await User.findById(req.user.id).select('-password');
         
         if (!user) return res.status(404).json({ message: "User not found" });

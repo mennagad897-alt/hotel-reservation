@@ -2,39 +2,41 @@ import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useContext } from "react";
 import API from "../api/axiosConfig";
-import { AuthContext } from "../context/AuthContext"; // تأكدي من المسار
-
+import { AuthContext } from "../context/AuthContext"; 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const navigate = useNavigate();
     const [serverError, setServerError] = useState("");
-    const { login } = useContext(AuthContext); // بننادي على دالة الـ login من الـ Context
-
+    const { login } = useContext(AuthContext); 
+    
     const onSubmit = async (data) => {
         try {
             setServerError("");
-            // 1. نبعت الإيميل والباسورد للـ Node.js
+            console.log("البيانات اللي رايحة للـ Login:", data);
             const response = await API.post("/login", data);
             
+            console.log(response.data);
+    alert("التوكن وصل: " + response.data.token);
+
+            console.log("الرد اللي وصل من السيرفر كامل:", response.data);
+
             if (response.status === 200) {
-                // 2. لو تمام، ناخد التوكن واليوزر ونخزنهم في الـ Context والـ LocalStorage
                 const { token, user } = response.data;
                 login(user, token); 
                 
                 alert("Welcome back!");
-                navigate("/Home"); // نوديه للهوم
+                navigate("/Home"); 
             }
         } catch (err) {
+          console.error("خطأ في الـ Login (Frontend):", err);
             setServerError(err.response?.data?.message || "Invalid email or password");
         }
     };
 
    return (
     <div className="flex justify-center items-center min-h-[90vh] bg-gray-50">
-      {/* الكارط الرئيسي بنفس ستايل الـ Register */}
       <div className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
         
-        {/* العنوان بلون Indigo وفخم */}
         <h2 className="text-3xl font-extrabold text-center text-indigo-900 mb-2">Welcome Back</h2>
         <p className="text-center text-gray-500 mb-8 text-sm">Please enter your details to login</p>
         
@@ -45,7 +47,6 @@ const Login = () => {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* حقل الإيميل */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Email Address</label>
             <input
@@ -59,7 +60,6 @@ const Login = () => {
             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
           </div>
 
-          {/* حقل الباسورد */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Password</label>
             <input
