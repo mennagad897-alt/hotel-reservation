@@ -4,9 +4,12 @@ const mongoose = require('mongoose');
 const User = require('./models/User');
 const Room = require('./models/Room');
 const Reservation = require('./models/Reservation');
-
 const app = express();
+const cors = require('cors');
+app.use(cors()); 
 app.use(express.json());
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 // Database Connection using environment variable
 const dbURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/hotel_reservation_db';
@@ -16,25 +19,57 @@ mongoose.connect(dbURI)
     .catch(err => console.error('Connection error:', err));
 
 // --- Auth Routes ---
-app.post('/api/signup', async (req, res) => {
+// Signup Route مع التشفير
+app.post('/api/signup', async function(req, res) {
     try {
         const { username, email, password } = req.body;
-        const newUser = new User({ username, email, password });
+
+        // 2. تشفير الباسورد قبل الحفظ
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        const newUser = new User({ 
+            username, 
+            email, 
+            password: hashedPassword // بنخزن النسخة المشفرة
+        });
+
         await newUser.save();
         res.status(201).json({ message: "Account created successfully!" });
     } catch (err) {
-        res.status(400).json({ message: "Email already exists!" });
+        console.error(err); 
+        res.status(400).json({ message: err.message });
     }
 });
 
-app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email, password }); 
-    
-    if (user) {
-        res.json({ message: `Welcome, ${user.username}` });
-    } else {
-        res.status(401).json({ message: "Invalid email or password" });
+// Login Route مع مقارنة التشفير
+app.post('/api/login', async function(req, res) {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email: email });
+        
+        if (!user) {
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+
+        // 3. مقارنة الباسورد اللي بعته اليوزر مع المتشفر في الداتا بيز
+        const isMatch = await bcrypt.compare(password, user.password);
+        
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+
+        // 4. توليد التوكن باستخدام السر من ملف .env
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        
+        res.json({
+            token,
+            user: { id: user._id, username: user.username, email: user.email }
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server Error" });
     }
 });
 
@@ -46,8 +81,12 @@ app.post('/api/rooms', async (req, res) => {
 });
 
 app.get('/api/rooms', async (req, res) => {
-    const rooms = await Room.find();
-    res.json(rooms);
+    try {
+        const rooms = await Room.find(); // بيجيب كل الغرف من المونجو
+        res.status(200).json(rooms);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching rooms" });
+    }
 });
 
 // --- Booking Routes ---
@@ -94,5 +133,43 @@ app.get('/api/book', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
+// دالة الـ Middleware بالصيغة العادية
+async function authMiddleware(req, res, next) {
+    const authHeader = req.header('Authorization');
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: "لم يتم العثور على توكن، الدخول غير مصرح به" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, "process.env.JWT_SECRET");
+        req.user = decoded;
+        next();
+    } catch (err) {
+        res.status(401).json({ message: "التوكن غير صالح" });
+    }
+}
+
+// GET /api/user/profile
+app.get('/api/user/profile', authMiddleware, async (req, res) => {
+    try {
+        // بنجيب اليوزر من الداتا بيز باستخدام الـ ID اللي موجود في التوكن
+        // وبنقول له (.select('-password')) عشان مش عايزين نبعت الباسورد للفرونت إند للأمان
+        const user = await User.findById(req.user.id).select('-password');
+        
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
+ 
+
+
+

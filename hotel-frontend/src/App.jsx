@@ -1,3 +1,4 @@
+import Navbar from "./Pages/Navbar";
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import AppRoutes from './routes/AppRoutes';
@@ -7,10 +8,10 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-                {/* لو عندك Navbar حطيها هنا عشان تظهر في كل الصفحات */}
-                <div className="container mx-auto p-4">
-                    <AppRoutes />
-                </div>
+             <Navbar /> {/* هيفضل ثابت فوق في كل الموقع */}
+      <main className="min-h-screen bg-gray-50">
+        <AppRoutes />
+      </main>
             </Router>
         </AuthProvider>
     );

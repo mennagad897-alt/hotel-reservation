@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const API = axios.create({
-    // حطي بورت الـ Node.js بتاعكم هنا (غالباً 5000 أو 8000)
     baseURL: 'http://localhost:5000/api', 
 });
 
@@ -16,5 +15,6 @@ API.interceptors.request.use((config) => {
 }, (error) => {
     return Promise.reject(error);
 });
+
 
 export default API;
