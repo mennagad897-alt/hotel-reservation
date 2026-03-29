@@ -109,6 +109,16 @@ app.get('/api/rooms', async (req, res) => {
     }
 });
 
+app.get('/api/rooms/:id', async (req, res) => {
+    try {
+        const room = await Room.findById(req.params.id);
+        if (!room) return res.status(404).json({ message: "Room not found" });
+        res.json(room);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching room" });
+    }
+});
+
 app.post('/api/book', async (req, res) => {
     const { roomId, guestName, checkIn, checkOut } = req.body;
     
