@@ -63,7 +63,6 @@ const Profile = () => {
   if (window.confirm("Are you sure you want to cancel this reservation?")) {
     try {
       await API.delete(`/reservations/${id}`);
-      // تحديث القائمة فوراً في الفرونت إند
       setReservations(reservations.filter(r => r._id !== id));
       alert("Reservation cancelled successfully");
     } catch (error) {
