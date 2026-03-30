@@ -51,11 +51,7 @@ function RoomDetails() {
         <div className="container mx-auto px-4 py-12 max-w-6xl">
             <div className="flex flex-col lg:flex-row gap-12 bg-white p-6 rounded-3xl shadow-xl border border-gray-50">
                 <div className="lg:w-1/2">
-                    <img 
-                        src={room.image || 'https://via.placeholder.com/800x500'} 
-                        className="w-full h-[400px] object-cover rounded-2xl shadow-md"
-                        alt={room.roomNumber}
-                    />
+                    <img src={`http://localhost:5000/uploads/${room.image}`} />
                 </div>
 
                 <div className="lg:w-1/2 flex flex-col justify-between py-2">

@@ -20,7 +20,7 @@ const Navbar = () => {
         </Link>
 
         <div className="flex items-center gap-6 font-medium">
-          <Link title="Home" to="/" className="hover:text-indigo-300 transition">Rooms</Link>
+          <Link title="Home" to="/rooms" className="hover:text-indigo-300 transition">Rooms</Link>
           
           {user ? (
             <>

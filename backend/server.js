@@ -1,200 +1,218 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const User = require('./models/User');
-const Room = require('./models/Room');
-const Reservation = require('./models/Reservation');
-const app = express();
-const cors = require('cors');
-app.use(cors()); 
-app.use(express.json());
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+import dotenv from "dotenv";
+dotenv.config();
 
-// Database Connection using environment variable
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+
+import User from "./models/User.js";
+import Room from "./models/Room.js";
+import Reservation from "./models/Reservation.js";
+
+
+// __dirname fix
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+/* ===================== AUTH MIDDLEWARE ===================== */
+const authMiddleware = (req, res, next) => {
+    const authHeader = req.header('Authorization');
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: "لم يتم العثور على توكن" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret_key_123");
+        req.user = decoded;
+        next();
+    } catch (err) {
+        res.status(401).json({ message: "التوكن غير صالح" });
+    }
+};
+
+/* ===================== DATABASE ===================== */
 const dbURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/hotel_reservation_db';
 
 mongoose.connect(dbURI)
     .then(() => console.log('Connected to MongoDB successfully!'))
     .catch(err => console.error('Connection error:', err));
 
-app.post('/api/signup', async function(req, res) {
+/* ===================== SIGNUP ===================== */
+app.post('/api/signup', async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
-        console.log("Password received in Signup:", password);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        console.log("Password after hashing:", hashedPassword);
-
-        const newUser = new User({ 
-            username, 
-            email, 
-            password: hashedPassword 
+        const newUser = new User({
+            username,
+            email,
+            password: hashedPassword
         });
 
         await newUser.save();
+
         res.status(201).json({ message: "Account created successfully!" });
+
     } catch (err) {
-        console.error(err); 
         res.status(400).json({ message: err.message });
     }
 });
 
-app.post('/api/login', async function(req, res) {
+/* ===================== LOGIN ===================== */
+app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        
-        console.log("--- محاولة تسجيل دخول ---");
-        console.log("الإيميل المبعوث:", email);
 
-        // 1. البحث عن المستخدم
-        const user = await User.findOne({ email: email });
+        const user = await User.findOne({ email });
+
         if (!user) {
-            console.log("النتيجة: الإيميل مش موجود");
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        // 2. مقارنة الباسورد الهاش
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log("هل الباسورد متطابق؟:", isMatch);
 
         if (!isMatch) {
-            console.log("النتيجة: الباسورد غلط");
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        // 3. توليد التوكن (الجزء اللي كان فيه الشك)
-        // بنستخدم سر احتياطي في حالة لو ملف الـ .env فيه مشكلة
         const secretKey = process.env.JWT_SECRET || "fallback_secret_key_123";
 
         const token = jwt.sign(
-            { id: user._id }, 
-            secretKey, 
+            {
+                id: user._id,
+                role: user.role
+            },
+            secretKey,
             { expiresIn: '1h' }
         );
 
-        console.log("تم توليد التوكن بنجاح! 🔑");
-
-        // 4. إرسال الرد النهائي
         res.json({
-            token: token,
-            user: { 
-                id: user._id, 
-                username: user.username, 
-                email: user.email 
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role
             }
         });
 
     } catch (err) {
-        // لو حصل أي خطأ في أي خطوة فوق، هيظهر هنا بالتفصيل في الترمينال
-        console.error("خطأ مفصل في السيرفر:", err.message);
-        res.status(500).json({ message: "Server Error: " + err.message });
+        res.status(500).json({ message: err.message });
     }
 });
 
-app.post('/api/rooms', async (req, res) => {
-    const newRoom = new Room(req.body);
-    await newRoom.save();
-    res.json({ message: "Room added successfully" });
+/* ===================== MULTER ===================== */
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'uploads'));
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage });
+
+/* ===================== ROOMS ===================== */
+app.post('/api/rooms', upload.single('image'), async (req, res) => {
+    try {
+        const newRoom = new Room({
+            roomNumber: req.body.roomNumber,
+            type: req.body.type,
+            price: req.body.price,
+            image: req.file ? req.file.filename : null
+        });
+
+        await newRoom.save();
+
+        res.status(201).json({ message: "Room added successfully" });
+
+    } catch (err) {
+        res.status(500).json({
+            message: "Error adding room",
+            error: err.message
+        });
+    }
 });
 
 app.get('/api/rooms', async (req, res) => {
-    try {
-        const rooms = await Room.find(); // بيجيب كل الغرف من المونجو
-        res.status(200).json(rooms);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching rooms" });
-    }
+    const rooms = await Room.find();
+    res.json(rooms);
 });
 
 app.get('/api/rooms/:id', async (req, res) => {
-    try {
-        const room = await Room.findById(req.params.id);
-        if (!room) return res.status(404).json({ message: "Room not found" });
-        res.json(room);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching room" });
-    }
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ message: "Room not found" });
+    res.json(room);
 });
 
-app.post('/api/book', async (req, res) => {
+/* ===================== BOOKING ===================== */
+app.post('/api/book', authMiddleware, async (req, res) => {
     const { roomId, guestName, checkIn, checkOut } = req.body;
-    
+
     const room = await Room.findById(roomId);
     if (!room || room.isBooked) return res.status(400).send("Room not available");
 
-    const days = Math.ceil(Math.abs(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
     const totalPrice = days * room.price;
 
-    const reservation = new Reservation({ roomId, guestName, checkIn, checkOut, totalPrice });
+    const reservation = new Reservation({
+        userId: req.user.id,
+        roomId,
+        guestName,
+        checkIn,
+        checkOut,
+        totalPrice
+    });
+
     await reservation.save();
-    
     await Room.findByIdAndUpdate(roomId, { isBooked: true });
-    res.status(201).json({ message: "Booking successful", details: reservation });
+
+    res.json(reservation);
 });
 
-app.delete('/api/book/:id', async (req, res) => {
+/* ===================== USER ===================== */
+app.get('/api/user/profile', authMiddleware, async (req, res) => {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+});
+
+/* ===================== RESERVATIONS ===================== */
+app.get('/api/my-bookings', authMiddleware, async (req, res) => {
+    const bookings = await Reservation.find({ userId: req.user.id }).populate('roomId');
+    res.json(bookings);
+});
+
+app.delete('/api/reservations/:id', authMiddleware, async (req, res) => {
     try {
         const reservation = await Reservation.findById(req.params.id);
-        if (!reservation) return res.status(404).send("Reservation not found");
+        if (!reservation) return res.status(404).json({ message: "الطلب غير موجود" });
 
+        // نرجع الغرفة متاحة تاني قبل ما نمسح الحجز
         await Room.findByIdAndUpdate(reservation.roomId, { isBooked: false });
-        await Reservation.findByIdAndDelete(req.params.id);
-        res.json({ message: "Booking cancelled and room is now free" });
-    } catch (err) {
-        res.status(500).send("Error deleting reservation");
-    }
-});
-
-app.put('/api/book/:id', async (req, res) => {
-    const updatedRes = await Reservation.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json({ message: "Data updated", updatedRes });
-});
-
-app.get('/api/book', async (req, res) => {
-    try {
-        const allReservations = await Reservation.find().populate('roomId');
-        res.json(allReservations);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching reservations" });
-    }
-});
-
-async function authMiddleware(req, res, next) {
-    const authHeader = req.header('Authorization');
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ message: "لم يتم العثور على توكن، الدخول غير مصرح به" });
-    }
-
-    try {
-        const decoded = jwt.verify(token, "process.env.JWT_SECRET");
-        req.user = decoded;
-        next();
-    } catch (err) {
-        res.status(401).json({ message: "التوكن غير صالح" });
-    }
-}
-
-app.get('/api/user/profile', authMiddleware, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id).select('-password');
         
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        res.json(user);
+        await Reservation.findByIdAndDelete(req.params.id);
+        res.json({ message: "تم إلغاء الحجز بنجاح" });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server Error");
+        res.status(500).json({ message: err.message });
     }
 });
 
+/* ===================== START SERVER ===================== */
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT} 🚀`));
- 
-
-
-

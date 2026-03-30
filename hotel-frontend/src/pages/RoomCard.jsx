@@ -5,11 +5,7 @@ const RoomCard = ({ room }) => {
   return (
     <div className="bg-white rounded-3xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 group">
       <div className="relative h-64 overflow-hidden">
-        <img 
-          src={room.image || 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=500'} 
-          alt={room.roomNumber} 
-          className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-        />
+        <img src={`http://localhost:5000/uploads/${room.image}`} />
         <div className="absolute top-4 right-4 bg-indigo-600 text-white px-4 py-1 rounded-full font-bold shadow-lg">
           ${room.price}
         </div>

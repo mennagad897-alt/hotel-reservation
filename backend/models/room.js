@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const roomSchema = new mongoose.Schema({
     roomNumber: { type: Number, required: true, unique: true },
@@ -12,4 +12,6 @@ const roomSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Room', roomSchema);
+const Room = mongoose.model('Room', roomSchema);
+
+export default Room;
