@@ -12,7 +12,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-indigo-900 to-blue-900 text-white shadow-lg p-4">
+    <nav className="bg-linear-to-r from-indigo-900 to-blue-900 text-white shadow-lg p-4">
       <div className="container mx-auto flex justify-between items-center">
         
         <Link to="/" className="text-2xl font-black tracking-tighter">
@@ -24,13 +24,32 @@ const Navbar = () => {
           
           {user ? (
             <>
+              {user.role === "admin" && (
+                <>
+                  <Link to="/admin/add-room" className="bg-yellow-500 text-indigo-900 px-3 py-1 rounded-lg text-sm font-bold hover:bg-yellow-400 transition">
+                    + Add Room
+                  </Link>
+                  <Link to="/admin/users" className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-green-600 transition">
+                   + Add Users
+                  </Link>
+                </>
+              )}
+
+              {user.role === "employee" && (
+                <Link to="/employee/bookings" className="bg-purple-500 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-purple-600 transition">
+                  Bookings
+                </Link>
+              )}
+
               <Link to="/profile" className="hover:text-indigo-300 transition">My Profile</Link>
+              
               <button 
                 onClick={handleLogout}
                 className="bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded-lg text-sm font-bold transition shadow-md"
               >
                 Logout
               </button>
+
               <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center border-2 border-indigo-300 font-bold uppercase">
                 {user.username?.charAt(0)}
               </div>

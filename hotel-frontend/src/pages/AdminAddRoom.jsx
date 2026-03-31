@@ -8,9 +8,8 @@ function AdminAddRoom() {
     const [statusMessage, setStatusMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const token = localStorage.getItem("token");
-    const userRole = localStorage.getItem("role"); // افترضنا إنك بتخزني الـ role هنا
+    const userRole = localStorage.getItem("role"); 
 
-    // حماية الصفحة: لو مفيش توكن أو المستخدم مش Admin
     if (!token || userRole !== "admin") {
         return <Navigate to="/login" />;
     }
@@ -20,22 +19,19 @@ function AdminAddRoom() {
             setIsLoading(true);
             setStatusMessage("");
 
-            // 1. استخدام FormData لرفع الملفات
             const formData = new FormData();
             formData.append("roomNumber", data.roomNumber);
             formData.append("type", data.type);
             formData.append("price", data.price);
             
-            // إضافة الصورة (بناخد أول ملف في المصفوفة)
             if (data.image && data.image[0]) {
                 formData.append("image", data.image[0]);
             }
 
-            // 2. إرسال الطلب مع الـ Headers المناسبة
             const response = await API.post('/rooms', formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
-                    "Authorization": `Bearer ${token}` // تأكدي من إرسال التوكن
+                    "Authorization": `Bearer ${token}` 
                 }
             });
 
@@ -91,7 +87,7 @@ function AdminAddRoom() {
                         />
                     </div>
 
-                    {/* حقل رفع الصورة الجديد */}
+            
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Room Image</label>
                         <input 

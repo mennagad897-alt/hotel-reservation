@@ -22,6 +22,7 @@ const signupSchema = z.object({
 const Signup = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { 
     register, 
@@ -34,17 +35,14 @@ const Signup = () => {
 const onSubmit = async (data) => {
     try {
       setServerError("");
-      console.log("Data being sent:", data); 
       
       const response = await API.post("/signup", data);
-      console.log("Response from server:", response);
 
       if (response.status === 201 || response.status === 200) {
         alert("Account created successfully!");
         navigate("/login");
       }
     } catch (err) {
-      console.error("Full Error Object:", err);
       setServerError(err.response?.data?.message || "Check console for more details.");
     }
 };
@@ -91,20 +89,29 @@ const onSubmit = async (data) => {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Password</label>
-            <input
-              type="password"
-              {...register("password")}
-              className={`w-full p-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
-                errors.password ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-indigo-500 focus:bg-white'
-              }`}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                {...register("password")}
+                className={`w-full p-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                  errors.password ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-indigo-500 focus:bg-white'
+                }`}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-500 hover:text-indigo-600 text-lg"
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
             {errors.password && <p className="text-red-500 text-xs mt-1 ml-1">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
-            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-800 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-200 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 mt-4"
+            className="w-full py-3.5 bg-linear-to-r from-indigo-600 to-blue-800 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-200 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 mt-4"
           >
             Sign Up
           </button>

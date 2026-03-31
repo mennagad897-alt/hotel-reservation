@@ -8,27 +8,20 @@ const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useContext(AuthContext);
 
   const onSubmit = async (data) => {
     try {
       setServerError("");
-
-      // إرسال طلب تسجيل الدخول
-      // تأكدي أن baseURL في axiosConfig ينتهي بـ /api ليكون المسار النهائي /api/login
       const response = await API.post("/login", data);
 
       if (response.data && response.data.token) {
         const { token, user } = response.data;
-
-        // 1. التخزين في localStorage أولاً (مهم جداً للـ Interceptor)
         localStorage.setItem("token", token);
         localStorage.setItem("role", user.role);
-
-        // 2. تحديث الـ Context الخاص بالتطبيق
         login(user, token);
 
-        // 3. التوجيه بناءً على الرول
         if (user.role === "admin") {
           navigate("/admin-dashboard");
         } else {
@@ -36,8 +29,6 @@ const Login = () => {
         }
       }
     } catch (err) {
-      console.error("Login Error:", err);
-      // عرض رسالة الخطأ القادمة من السيرفر
       setServerError(err.response?.data?.message || "Invalid email or password");
     }
   };
@@ -56,7 +47,6 @@ const Login = () => {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Email Field */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Email Address</label>
             <input
@@ -70,23 +60,31 @@ const Login = () => {
             {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</p>}
           </div>
 
-          {/* Password Field */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1 ml-1">Password</label>
-            <input
-              type="password"
-              {...register("password", { required: "Password is required" })}
-              className={`w-full p-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
-                errors.password ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-indigo-500 focus:bg-white'
-              }`}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                {...register("password", { required: "Password is required" })}
+                className={`w-full p-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                  errors.password ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-indigo-500 focus:bg-white'
+                }`}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-500 hover:text-indigo-600 text-lg"
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
             {errors.password && <p className="text-red-500 text-xs mt-1 ml-1">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
-            className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-800 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-200 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 mt-4"
+            className="w-full py-3.5 bg-linear-to-r from-indigo-600 to-blue-800 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-200 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 mt-4"
           >
             Login
           </button>

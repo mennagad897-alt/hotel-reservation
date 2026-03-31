@@ -83,7 +83,7 @@ function RoomDetails() {
                         <button 
                             onClick={handleBooking}
                             disabled={room.isBooked}
-                            className={`w-full py-4 text-white text-xl font-bold rounded-2xl shadow-lg transition-all ${room.isBooked ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-blue-800 hover:scale-[1.02]'}`}
+                            className={`w-full py-4 text-white text-xl font-bold rounded-2xl shadow-lg transition-all ${room.isBooked ? 'bg-gray-400 cursor-not-allowed' : 'bg-linear-to-r from-indigo-600 to-blue-800 hover:scale-[1.02]'}`}
                         >
                             {room.isBooked ? "Already Booked" : "Confirm Booking"}
                         </button>

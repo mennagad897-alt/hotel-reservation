@@ -3,15 +3,13 @@ import { AuthContext } from "../context/AuthContext";
 import API from "../api/axiosConfig";
 
 const Profile = () => {
-  const { user } = useContext(AuthContext);
-
+const { Login } = useContext(AuthContext);
   const [profileData, setProfileData] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [showReservations, setShowReservations] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingReservations, setLoadingReservations] = useState(false);
 
-  // 1. جلب بيانات البروفايل عند تحميل الصفحة
   useEffect(() => {
     const fetchProfile = async () => {
       try {

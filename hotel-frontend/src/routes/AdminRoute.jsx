@@ -4,7 +4,7 @@ export default function AdminRoute({ children }) {
   const role = localStorage.getItem("role");
 
   if (role !== "admin") {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
